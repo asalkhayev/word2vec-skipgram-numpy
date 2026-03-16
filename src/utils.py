@@ -2,36 +2,29 @@ import numpy as np
 
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
-    a_norm = np.linalg.norm(a)
-    b_norm = np.linalg.norm(b)
-
-    if a_norm == 0 or b_norm == 0:
-        return 0.0
-
-    return float(np.dot(a, b) / (a_norm * b_norm))
+    """
+    Compute cosine similarity between two vectors.
+    """
+    denom = (np.linalg.norm(a) * np.linalg.norm(b)) + 1e-10
+    return float(np.dot(a, b) / denom)
 
 
-def find_nearest_words(
-    word: str,
-    word_vectors: np.ndarray,
-    word2id: dict[str, int],
-    id2word: dict[int, str],
-    top_k: int = 5,
-) -> list[str]:
+def find_nearest_words(word, word_vectors, word2id, id2word, top_k: int = 5):
+    """
+    Return the top_k nearest words to the given query word using cosine similarity.
+    """
     if word not in word2id:
         return []
 
-    word_id = word2id[word]
-    query_vector = word_vectors[word_id]
+    query_id = word2id[word]
+    query_vec = word_vectors[query_id]
 
-    similarities = []
-    for i in range(len(word_vectors)):
-        if i == word_id:
+    sims = []
+    for idx in range(len(word_vectors)):
+        if idx == query_id:
             continue
+        sim = cosine_similarity(query_vec, word_vectors[idx])
+        sims.append((id2word[idx], sim))
 
-        sim = cosine_similarity(query_vector, word_vectors[i])
-        similarities.append((sim, id2word[i]))
-
-    similarities.sort(reverse=True, key=lambda x: x[0])
-
-    return [word for _, word in similarities[:top_k]]
+    sims.sort(key=lambda x: x[1], reverse=True)
+    return sims[:top_k]
